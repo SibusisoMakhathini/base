@@ -1,0 +1,50 @@
+def ZIP_NODE
+def CODE_VERSION
+pipeline{
+    /*A declarative pipeline*/
+
+    agent {
+        /*Agent section*/ 
+        // where would you like to run the code 
+        label 'master' 
+        }
+    options{
+        timestamps()
+        }
+    parameters {
+        choice(choices: ['dev'], description: 'Name of the environment', name: 'ENV')
+        choice(choices: ['us-east-1', 'us-west-1','us-west-2','us-east-2','ap-south-1'], description: 'What AWS region?', name: 'AWS_DEFAULT_REGION')
+        string(defaultValue: "", description: '', name: 'APP_VERSION')
+
+        }
+    stages{
+        /*stages section*/
+        stage('Initialize the variables') {
+            // Each stage is made up of steps
+            steps{
+                script{
+                    CODE_VERSION="${BUILD_NUMBER}-${ENV}"
+                    ZIP_NODE="abcdefgh-0.0.${CODE_VERSION}.zip"
+                }
+            }                
+        }
+        stage ('code - Checkout') {
+            steps{
+                println "checkout skipped"
+                //checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'xxxxxxxxxxxxxxxxxxxxxxxxxx', url: 'http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.git']]]) 
+            }  
+        }
+
+        stage ('code - Build'){
+            steps{
+                sh "echo ${JOB_NAME} && pwd && echo ${ZIP_NODE} && echo 'remove alraedy existing zip files' && rm -rf *.zip && zip -r ${ZIP_NODE} . && chmod 777 $ZIP_NODE"
+            }
+        }
+        stage('Deploy on Beanstalk'){
+            steps{
+                println "build job skipped"
+                //build job: 'abcdefgh-PHASER' , parameters: [[$class: 'StringParameterValue', name: 'vpc', value: ENV], [$class: 'StringParameterValue', name: 'ZIP_NODE', value: ZIP_NODE], [$class: 'StringParameterValue', name: 'CODE_VERSION', value: CODE_VERSION], [$class: 'StringParameterValue', name: 'APP_VERSION', value: BUILD_NUMBER], [$class: 'StringParameterValue', name: 'AWS_DEFAULT_REGION', value: AWS_DEFAULT_REGION], [$class: 'StringParameterValue', name: 'ParentJobName', value: JOB_NAME]]
+            }
+        }
+    } 
+}
